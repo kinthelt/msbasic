@@ -31,3 +31,7 @@
 .ifdef W65C816SXB
 .include "w65c816sxb_extra.s"
 .endif
+
+.ifdef EATER
+.include "eater_bios.s"
+.endif
