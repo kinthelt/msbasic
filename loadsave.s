@@ -15,3 +15,6 @@
 .ifdef SYM1
 .include "sym1_loadsave.s"
 .endif
+.ifdef EATER
+.include "eater_loadsave.s"
+.endif
