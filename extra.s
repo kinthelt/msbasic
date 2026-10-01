@@ -33,5 +33,5 @@
 .endif
 
 .ifdef EATER
-.include "eater_bios.s"
+.include "eater_extra.s"
 .endif
