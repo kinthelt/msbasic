@@ -76,7 +76,9 @@ FOR_STACK2		:= BYTES_FP+4
 MAX_EXPON = 10
 .endif
 
+.ifndef STACK
 STACK           := $0100
+.endif
 .ifndef STACK2
 STACK2          := STACK
 .endif

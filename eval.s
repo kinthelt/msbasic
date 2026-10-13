@@ -16,9 +16,31 @@ NEXT2:
         beq     NEXT3
         ldx     #$00
 GERR:
+.ifdef OS816
+        jeq     JERROR          ; 816os: out of range of a BEQ
+.else
         beq     JERROR
+.endif
 NEXT3:
-        txs
+        txs_safe
+.ifdef OS816
+; 816os: the frame is on the stack in bank 0, which a 16-bit pointer can't
+; reach. Copy the STEP value, its sign and the limit to FORBUF.
+        stack_x16
+        ldy     #$00
+@copy:
+        lda     STACK+4,x
+        sta     FORBUF,y
+        inx
+        iny
+        cpy     #2*BYTES_FP+1
+        bne     @copy
+        stack_x8
+        lda     #<(FORBUF+BYTES_FP+1)
+        sta     DEST
+        lda     #<FORBUF
+        ldy     #>FORBUF
+.else
 .ifndef CONFIG_2
         inx
         inx
@@ -45,17 +67,25 @@ NEXT3:
         stx     DEST
 .endif
         ldy     #>STACK
+.endif
         jsr     LOAD_FAC_FROM_YA
         tsx
+        stack_x16
         lda     STACK+BYTES_FP+4,x
+        stack_x8
         sta     FACSIGN
         lda     FORPNT
         ldy     FORPNT+1
         jsr     FADD
         jsr     SETFOR
+.ifdef OS816
+        ldy     #>FORBUF
+.else
         ldy     #>STACK
+.endif
         jsr     FCOMP2
         tsx
+        stack_x16
         sec
         sbc     STACK+BYTES_FP+4,x
         beq     L2C22
@@ -67,13 +97,15 @@ NEXT3:
         sta     TXTPTR
         lda     STACK+2*BYTES_FP+7,x
         sta     TXTPTR+1
+        stack_x8
 L2C1F:
         jmp     NEWSTT
 L2C22:
+        stack_x8
         txa
         adc     #2*BYTES_FP+7
         tax
-        txs
+        txs_safe
         jsr     CHRGOT
         cmp     #$2C
         bne     L2C1F
@@ -273,7 +305,11 @@ FRM_STACK3:
         pha
         lda     FAC
         pha
+.ifdef OS816
+        jmp     JMP_INDEX
+.else
         jmp     (INDEX)
+.endif
 L2D02:
         ldy     #$FF
         pla
@@ -589,6 +625,14 @@ L2DEF:
         pla
         tay
 L2DF4:
+.ifdef OS816
+; JSR JMPADRS would go to $00xx in BASIC's bank, not the direct page.
+        lda     UNFNC-TOKEN_SGN-TOKEN_SGN+$100,y
+        sta     JMPTRAMP+1
+        lda     UNFNC-TOKEN_SGN-TOKEN_SGN+$101,y
+        sta     JMPTRAMP+2
+        jsr     JMPTRAMP
+.else
         lda     UNFNC-TOKEN_SGN-TOKEN_SGN+$100,y
         sta     JMPADRS+1
         lda     UNFNC-TOKEN_SGN-TOKEN_SGN+$101,y
@@ -597,6 +641,7 @@ L2DF4:
         jsr     LF47D
 .else
         jsr     JMPADRS
+.endif
 .endif
         jmp     CHKNUM
 
@@ -638,8 +683,20 @@ RELOPS:
         ora     #$7F
         and     ARG+1
         sta     ARG+1
+.ifdef OS816
+; FCOMP takes a pointer, so ARG has to be copied to BASIC's bank.
+        ldx     #BYTES_FP-1
+@copy:
+        lda     ARG,x
+        sta     ARGBUF,x
+        dex
+        bpl     @copy
+        lda     #<ARGBUF
+        ldy     #>ARGBUF
+.else
         lda     #<ARG
         ldy     #$00
+.endif
         jsr     FCOMP
         tax
         jmp     NUMCMP

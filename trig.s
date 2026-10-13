@@ -75,17 +75,17 @@ TAN:
         lda     #$00
         sta     CPRMASK
         jsr     SIN
-        ldx     #TEMP3
+        ldx     #<TEMP3
         ldy     #$00
         jsr     GOMOVMF
-        lda     #TEMP1+(5-BYTES_FP)
+        lda     #<(TEMP1+(5-BYTES_FP))
         ldy     #$00
         jsr     LOAD_FAC_FROM_YA
         lda     #$00
         sta     FACSIGN
         lda     CPRMASK
         jsr     TAN1
-        lda     #TEMP3
+        lda     #<TEMP3
         ldy     #$00
         jmp     FDIV
 TAN1:

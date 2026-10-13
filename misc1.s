@@ -188,8 +188,20 @@ L294D:
         sta     STRNG1
         sty     STRNG1+1
         jsr     MOVINS
+.ifdef OS816
+; The new descriptor is in FAC; copy it to where a pointer can reach.
+        ldx     #$02
+@copy:
+        lda     FAC,x
+        sta     FACBUF,x
+        dex
+        bpl     @copy
+        lda     #<FACBUF
+        ldy     #>FACBUF
+.else
         lda     #FAC
         ldy     #$00
+.endif
 L2963:
         sta     DSCPTR
         sty     DSCPTR+1

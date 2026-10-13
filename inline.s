@@ -1,6 +1,6 @@
 .segment "CODE"
 
-.ifndef CONFIG_NO_INPUTBUFFER_ZP
+.if (!.def(CONFIG_NO_INPUTBUFFER_ZP)) || .def(OS816)
 L2420:
   .ifdef OSI
         jsr     OUTDO

@@ -21,7 +21,7 @@ FOR:
         txa
         adc     #FOR_STACK1
         tax
-        txs
+        txs_safe
 L2619:
         pla
         pla

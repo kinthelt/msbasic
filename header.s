@@ -35,5 +35,22 @@
         jmp     COLD_START
 .endif
 .ifdef OS816
+; The kernel starts a process here in native mode, with 16-bit registers,
+; its own direct page, and S near the top of its stack area in bank 0.
+; BASIC's stack is that area's top page (defines_os816.s).
+        .a16
+        .i16
+        tsc
+        and     #$FF00          ; the stack page
+        ora     #STACK_TOP
+        tcs
+        sta     STKSAV          ; STKSAV+1 = the stack page
+        sep     #$30
+        .a8
+        .i8
+        stz     KEYBUF
+        phb
+        pla
+        sta     PEEKBANK        ; PEEK and POKE start in BASIC's own bank
         jmp     COLD_START
 .endif

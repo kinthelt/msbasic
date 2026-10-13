@@ -44,7 +44,7 @@ COLD_START:
   .elseif .def(AIM65)
         ldx     #$FE
   .endif
-        txs
+        txs_safe
   .ifndef CONFIG_CBM_ALL
         lda     #<COLD_START
         ldy     #>COLD_START
@@ -84,6 +84,9 @@ COLD_START:
   .endif
   .if (!.def(CONFIG_RAM)) && (!.def(CONFIG_CBM_ALL))
         sta     USR
+  .endif
+  .ifdef OS816
+        sta     JMPTRAMP
   .endif
   .endif
 
@@ -141,6 +144,16 @@ COLD_START:
 ; the number of bytes by adding 3 - this
 ; copies four bytes too many, which is no
 ; problem.
+.ifdef OS816
+; 816os: CHRGET is ordinary code; only the random number seed is copied,
+; all of it. Leaves X = 0, as below.
+        ldx     #BYTES_FP
+L4098:
+        lda     GENERIC_RNDSEED-1,x
+        sta     RNDSEED-1,x
+        dex
+        bne     L4098
+.else
 .ifdef CONFIG_SMALL
   .ifdef KBD
         ldx     #GENERIC_CHRGET_END-GENERIC_CHRGET+4
@@ -155,6 +168,7 @@ L4098:
         sta     CHRGET-1,x
         dex
         bne     L4098
+.endif
 .ifdef CONFIG_2
         lda     #$03
         sta     DSCLEN
@@ -196,12 +210,12 @@ L4098:
         stx     INPUTBUFFER-3
         stx     INPUTBUFFER-4
   .endif
-  .ifdef APPLE
+  .if .def(APPLE) || .def(OS816)
         lda     #$01
         sta     INPUTBUFFER-3
         sta     INPUTBUFFER-4
   .endif
-        ldx     #TEMPST
+        ldx     #<TEMPST
         stx     TEMPPT
 .ifndef CONFIG_CBM_ALL
         lda     #<QT_MEMORY_SIZE
@@ -218,7 +232,7 @@ L4098:
   .ifndef AIM65
     .ifndef SYM1
         cmp     #$41
-        beq     PR_WRITTEN_BY
+        jeq     PR_WRITTEN_BY   ; 816os: out of range of a BEQ
     .endif
   .endif
         tay
@@ -257,6 +271,13 @@ L40D7:
 ; AIM65: hard RAM top limit is $A000
         lda     LINNUM+1
         cmp     #$A0
+        beq     L40FA
+.endif
+.ifdef OS816
+; 816os: stop at RAMTOP; the bank goes on to $FFFF, then wraps
+; around to BASIC itself at $0000
+        lda     LINNUM+1
+        cmp     #>RAMTOP
         beq     L40FA
 .endif
 L40DD:
@@ -438,7 +459,11 @@ L4192:
         ldy     #>RESTART
         sta     GORESTART+1
         sty     GORESTART+2
+  .ifdef OS816
+        jmp     GORESTART       ; JMP (addr) reads its vector from bank 0
+  .else
         jmp     (GORESTART+1)
+  .endif
 .endif
 
   .if .def(CONFIG_RAM) || .def(OSI)

@@ -29,6 +29,7 @@ Additionally these releases are built for computer originally not having "origin
 | Name                | Release  | .define    |
 | ------------------- |:--------:| ---------- |
 | W65C816SXB          |  2014    | CONFIG_2C  |
+| 816os               |  2026    | CONFIG_2A  |
 
 
 The following symbols can be defined in addition:
@@ -59,6 +60,34 @@ The following symbols can be defined in addition:
 
 Changing symbol definitions can alter an existing base configuration, but it not guaranteed to assemble
 or work correctly.
+
+## 816os
+
+The `os816` build runs as a native-mode 65C816 process under
+[816os](https://github.com/kinthelt/816os), alongside other processes.
+`./make.sh` builds `tmp/os816.bin`, an image linked at $0000 of a bank.
+At the 816os shell, load it into a free bank (1-7) with XMODEM and run it:
+
+```
+> load 10000          then send tmp/os816.bin from the terminal program
+> run 1
+```
+
+Press Return at `MEMORY SIZE?` to use the bank up to $E000 (about 47 KB
+free). Ctrl-C stops a program; Ctrl-Z pauses BASIC and returns to the shell
+(`fg 1` resumes it, `kill 1` ends it). `SAVE` and `LOAD` transfer the
+program with XMODEM through the kernel's `K_SAVE` and `K_LOAD`. Several
+copies can run at once, each in its own bank.
+
+`PEEK`, `POKE` and `WAIT` address BASIC's own bank until a `BANK n`
+statement (816os only) picks another one; `BANK` alone goes back. For
+example, `BANK 0: POKE 24578,255: POKE 24576,85` lights alternate LEDs on
+the VIA's port B, and `BANK 3: PRINT PEEK(4096)` reads $03:1000. Nothing
+stops a `POKE` from crashing the kernel or another process.
+
+`defines_os816.s` describes how the port deals with native mode: the zero
+page is the process's direct page and the stack is a page of its stack
+area, both in bank 0, while the program and its data are in BASIC's bank.
 
 ## More Information
 

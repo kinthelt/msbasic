@@ -85,7 +85,7 @@ POP:
         sta     FORPNT
 .endif
         jsr     GTFORPNT
-        txs
+        txs_safe
         cmp     #TOKEN_GOSUB
         beq     RETURN
         ldx     #ERR_NOGOSUB

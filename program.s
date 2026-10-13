@@ -569,7 +569,7 @@ CLEARC:
         jsr     RESTORE
 ; ----------------------------------------------------------------------------
 STKINI:
-        ldx     #TEMPST
+        ldx     #<TEMPST
         stx     TEMPPT
         pla
 .ifdef CONFIG_2
@@ -582,7 +582,7 @@ STKINI:
         sta     STACK+STACK_TOP+2
 .endif
         ldx     #STACK_TOP
-        txs
+        txs_safe
 .ifdef CONFIG_2
         pha
         tya

@@ -25,6 +25,7 @@ GTFORPNT:
         inx
         inx
 L2279:
+        stack_x16
         lda     STACK+1,x
         cmp     #$81
         bne     L22A1
@@ -41,12 +42,14 @@ L228E:
         cmp     STACK+2,x
         beq     L22A1
 L229A:
+        stack_x8
         txa
         clc
         adc     #BYTES_PER_FRAME
         tax
         bne     L2279
 L22A1:
+        stack_x8
         rts
 
 ; ----------------------------------------------------------------------------
@@ -128,6 +131,26 @@ REASON:
         bcc     L231E
 L22FC:
         pha
+.ifdef OS816
+; Save HIGHDS up to FAC-1 around GARBAG, as below. TEMP1 isn't in the
+; direct page here, and "STA FAC,X" with X negative doesn't wrap around
+; within the direct page in native mode, so count X up from 0 instead.
+        ldx     #FAC-HIGHDS
+        tya
+L2300:
+        pha
+        lda     HIGHDS-1,x
+        dex
+        bpl     L2300
+        jsr     GARBAG
+        ldx     #$00
+L230B:
+        pla
+        sta     HIGHDS,x
+        inx
+        cpx     #FAC-HIGHDS
+        bne     L230B
+.else
         ldx     #FAC-TEMP1-1
         tya
 L2300:
@@ -142,6 +165,7 @@ L230B:
         sta     FAC,x
         inx
         bmi     L230B
+.endif
         pla
         tay
         pla

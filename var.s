@@ -145,7 +145,9 @@ NAMENOTFOUND:
         bne     MAKENEWVARIABLE
 .ifdef CONFIG_SAFE_NAMENOTFOUND
         tsx
+        stack_x16
         lda     STACK+2,x
+        stack_x8
         cmp     #>FRM_VARIABLE_CALL
         bne     MAKENEWVARIABLE
 .endif

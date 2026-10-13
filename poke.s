@@ -70,7 +70,11 @@ LD6F3:
 		nop
 		nop
 .endif
+.ifdef OS816
+        lda     [LINNUM],y      ; in bank PEEKBANK
+.else
         lda     (LINNUM),y
+.endif
         tay
 .ifdef CONFIG_PEEK_SAVE_LINNUM
         pla
@@ -88,7 +92,11 @@ POKE:
         jsr     GTNUM
         txa
         ldy     #$00
+.ifdef OS816
+        sta     [LINNUM],y      ; in bank PEEKBANK
+.else
         sta     (LINNUM),y
+.endif
         rts
 
 ; ----------------------------------------------------------------------------
@@ -109,7 +117,11 @@ L3628:
         stx     FORPNT+1
         ldy     #$00
 L362C:
+.ifdef OS816
+        lda     [LINNUM],y      ; in bank PEEKBANK
+.else
         lda     (LINNUM),y
+.endif
         eor     FORPNT+1
         and     FORPNT
         beq     L362C
