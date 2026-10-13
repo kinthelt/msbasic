@@ -1,5 +1,29 @@
 .segment "CODE"
 
+.ifdef OS816
+; FAC = minuend - subtrahend, after combining the extension bytes; for FADD3.
+.macro fadd_subtract minuend, subtrahend
+        sec
+        eor     #$FF
+        adc     ARGEXTENSION
+        sta     FACEXTENSION
+  .ifndef CONFIG_SMALL
+        lda     minuend+4
+        sbc     subtrahend+4
+        sta     FAC+4
+  .endif
+        lda     minuend+3
+        sbc     subtrahend+3
+        sta     FAC+3
+        lda     minuend+2
+        sbc     subtrahend+2
+        sta     FAC+2
+        lda     minuend+1
+        sbc     subtrahend+1
+        sta     FAC+1
+.endmacro
+.endif
+
 TEMP1X = TEMP1+(5-BYTES_FP)
 
 ; ----------------------------------------------------------------------------
@@ -117,6 +141,18 @@ L3683:
 FADD3:
         bit     SGNCPR
         bpl     FADD4
+.ifdef OS816
+; LDA has no direct page,Y mode: "LDA 4,Y" would read BASIC's bank. So
+; subtract FAC and ARG by name, the same way round as below.
+        cpx     #ARG
+        bne     L369B_ARG
+        ldy     #FAC
+        fadd_subtract FAC, ARG
+        jmp     NORMALIZE_FAC1
+L369B_ARG:
+        ldy     #ARG
+        fadd_subtract ARG, FAC
+.else
         ldy     #FAC
         cpx     #ARG
         beq     L369B
@@ -140,6 +176,7 @@ L369B:
         lda     1,y
         sbc     1,x
         sta     FAC+1
+.endif
 
 ; ----------------------------------------------------------------------------
 ; NORMALIZE VALUE IN FAC
@@ -774,7 +811,11 @@ FDIVT:
         jsr     ADD_EXPONENTS
         inc     FAC
         beq     JOV
+.ifdef OS816
+        ldx     #$00            ; see L39B7
+.else
         ldx     #<-MANTISSA_BYTES
+.endif
         lda     #$01
 L39A1:
         ldy     ARG+1
@@ -795,9 +836,19 @@ L39B7:
         rol     a
         bcc     L39C4
         inx
+.ifdef OS816
+; X counts up from 0, not from -MANTISSA_BYTES: in native mode, direct page
+; indexing doesn't wrap around within the page. The flags at L39F2 and
+; L39F6 are the same as below (carry set), and L39C4 restores them.
+        sta     RESULT-1,x
+        cpx     #MANTISSA_BYTES
+        beq     L39F2
+        bcs     L39F6
+.else
         sta     RESULT_LAST-1,x
         beq     L39F2
         bpl     L39F6
+.endif
         lda     #$01
 L39C4:
         plp
@@ -895,14 +946,14 @@ LOAD_FAC_FROM_YA:
 ; ROUND FAC, STORE IN TEMP2
 ; ----------------------------------------------------------------------------
 STORE_FAC_IN_TEMP2_ROUNDED:
-        ldx     #TEMP2
+        ldx     #<TEMP2
         .byte   $2C
 
 ; ----------------------------------------------------------------------------
 ; ROUND FAC, STORE IN TEMP1
 ; ----------------------------------------------------------------------------
 STORE_FAC_IN_TEMP1_ROUNDED:
-        ldx     #TEMP1X
+        ldx     #<TEMP1X
         ldy     #$00
         beq     STORE_FAC_AT_YX_ROUNDED
 
@@ -1706,13 +1757,13 @@ FPWRT:
         bne     L3DD5
         jmp     STA_IN_FAC_SIGN_AND_EXP
 L3DD5:
-        ldx     #TEMP3
+        ldx     #<TEMP3
         ldy     #$00
         jsr     STORE_FAC_AT_YX_ROUNDED
         lda     ARGSIGN
         bpl     L3DEF
         jsr     INT
-        lda     #TEMP3
+        lda     #<TEMP3
         ldy     #$00
         jsr     FCOMP
         bne     L3DEF
@@ -1723,7 +1774,7 @@ L3DEF:
         tya
         pha
         jsr     LOG
-        lda     #TEMP3
+        lda     #<TEMP3
         ldy     #$00
         jsr     FMULT
         jsr     EXP
@@ -1838,10 +1889,10 @@ POLYNOMIAL_ODD:
         sta     STRNG2
         sty     STRNG2+1
         jsr     STORE_FAC_IN_TEMP1_ROUNDED
-        lda     #TEMP1X
+        lda     #<TEMP1X
         jsr     FMULT
         jsr     SERMAIN
-        lda     #TEMP1X
+        lda     #<TEMP1X
         ldy     #$00
         jmp     FMULT
 
@@ -1882,7 +1933,7 @@ L3ECB:
         sta     STRNG2
         sty     STRNG2+1
         jsr     FADD
-        lda     #TEMP2
+        lda     #<TEMP2
         ldy     #$00
         dec     SERLEN
         bne     L3EBE

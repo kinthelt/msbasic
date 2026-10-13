@@ -2,6 +2,7 @@
 .feature org_per_seg
 .zeropage
 
+.ifndef OS816 ; 816os: in BASIC's own bank, see below
 .org ZP_START1
 
 GORESTART:
@@ -12,6 +13,7 @@ GOAYINT:
 	.res 2
 GOGIVEAYF:
 	.res 2
+.endif
 
 .org ZP_START2
 Z15:
@@ -70,8 +72,10 @@ TEMPPT:
 	.res 1
 LASTPT:
 	.res 2
+.ifndef OS816
 TEMPST:
 	.res 9
+.endif
 INDEX:
 	.res 2
 DEST:
@@ -116,7 +120,9 @@ LASTOP:
 CPRTYP:
 	.res 1
 FNCNAM:
+.ifndef OS816
 TEMP3:
+.endif
 	.res 2
 DSCPTR:
 .ifdef CONFIG_SMALL
@@ -135,14 +141,18 @@ ARGEXTENSION:
 .ifndef CONFIG_SMALL
 	.res 1
 .endif
+.ifndef OS816
 TEMP1:
+.endif
 	.res 1
 HIGHDS:
 	.res 2
 HIGHTR:
 	.res 2
 .ifndef CONFIG_SMALL
+  .ifndef OS816
 TEMP2:
+  .endif
 	.res 1
 .endif
 INDX:
@@ -194,10 +204,70 @@ USR2:
 USR3:
 	.res 3
 .endif
+.ifdef OS816
+TXTPTR:
+	.res 2
+STKSAV:				; for txs_safe and stack_x16: X, then the
+	.res 2			; stack page (macros.s)
+KEYBUF:				; a key ISCNTC read that wasn't Ctrl-C, or 0
+	.res 1
+.assert * <= $0100, error, "direct page variables don't fit in a page"
+.else
 CHRGET:
 TXTPTR = <(GENERIC_TXTPTR-GENERIC_CHRGET + CHRGET)
 CHRGOT = <(GENERIC_CHRGOT-GENERIC_CHRGET + CHRGET)
 CHRGOT2 = <(GENERIC_CHRGOT2-GENERIC_CHRGET + CHRGET)
 RNDSEED = <(GENERIC_RNDSEED-GENERIC_CHRGET + CHRGET)
+.endif
+
+.ifdef OS816
+; ----------------------------------------------------------------------------
+; 816os: variables in BASIC's own bank
+;
+; The direct page is in bank 0, but (zp),Y pointers reach BASIC's own bank
+; through the data bank register. So anything BASIC points at with a 16-bit
+; pointer has to be in this bank, not in the direct page. This segment is
+; linked into page 0 of the image, so pointers to it still have a zero high
+; byte, as the code expects (for example "LDX #TEMPST" plus "LDY #$00").
+; Labels here are absolute, so the assembler uses absolute addressing
+; (data bank) for them, not direct page addressing.
+; ----------------------------------------------------------------------------
+.segment "BANKVARS": absolute
+BANKVARS_START:
+TEMPST:				; temporary string descriptors
+	.res 9
+TEMP1:				; floating point temporaries
+	.res 5
+TEMP2:
+	.res 5
+TEMP3:
+	.res 5
+RNDSEED:
+	.res BYTES_FP
+FORBUF:				; NEXT: STEP, its sign and the limit, from the stack
+	.res 2*BYTES_FP+1
+ARGBUF:				; relational operators: ARG, for FCOMP
+	.res BYTES_FP
+FACBUF:				; LET: a string descriptor from FAC
+	.res 3
+BANKVARS_PAGE0_END:		; everything above must stay in page 0
+GORESTART:			; JMP instructions
+	.res 3
+GOSTROUT:
+	.res 3
+USR:
+	.res 3
+JMPTRAMP:			; for jumps through a vector in the direct page
+	.res 3
+GOAYINT:			; addresses for USR routines
+	.res 2
+GOGIVEAYF:
+	.res 2
+XM_ADDR:			; LOAD and SAVE: address and count tables
+	.res 3
+XM_LEN:
+	.res 3
+.assert BANKVARS_PAGE0_END <= STACK2-1, lderror, "BANKVARS must be in page 0, below STACK2-1"
+.endif
 
 

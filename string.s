@@ -109,18 +109,28 @@ LD399:
 ; ----------------------------------------------------------------------------
 PUTNEW:
         ldx     TEMPPT
-        cpx     #TEMPST+9
+        cpx     #<(TEMPST+9)
         bne     PUTEMP
         ldx     #ERR_FRMCPX
 JERR:
         jmp     ERROR
 PUTEMP:
+.ifdef OS816
+; X is the low byte of a TEMPST address, in page 0 of BASIC's bank.
+        lda     FAC
+        sta     a:0,x
+        lda     FAC+1
+        sta     a:1,x
+        lda     FAC+2
+        sta     a:2,x
+.else
         lda     FAC
         sta     0,x
         lda     FAC+1
         sta     1,x
         lda     FAC+2
         sta     2,x
+.endif
         ldy     #$00
         stx     FAC_LAST-1
         sty     FAC_LAST
@@ -203,7 +213,7 @@ FINDHIGHESTSTRING:
         ldx     STREND+1
         sta     LOWTR
         stx     LOWTR+1
-        lda     #TEMPST
+        lda     #<TEMPST
         ldx     #$00
         sta     INDEX
         stx     INDEX+1

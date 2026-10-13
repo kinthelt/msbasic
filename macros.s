@@ -76,3 +76,45 @@ ERROR_MESSAGES:
 	.endrep
 .endmacro
 
+;---------------------------------------------
+; 816os runs BASIC in 65816 native mode, with its stack in one page of
+; bank 0 that isn't page 1 (defines_os816.s). STKSAV+1 holds that page.
+; Elsewhere, txs_safe is TXS, and stack_x16 and stack_x8 are nothing.
+
+; TXS. In native mode, TXS with 8-bit index registers clears the stack
+; pointer's high byte, so rebuild the whole pointer from X and the stack
+; page. Keeps A, X and Y; changes N and Z, which no caller uses.
+.macro txs_safe
+.ifdef OS816
+        stx     STKSAV
+        rep     #$10
+        .i16
+        ldx     STKSAV
+        txs
+        sep     #$10
+        .i8
+.else
+        txs
+.endif
+.endmacro
+
+; Before "LDA STACK+n,X" with X from TSX: make X the whole 16-bit stack
+; pointer value. On 816os, STACK is a far address, $00:0000, so these are
+; long,X accesses into bank 0. Keeps A and Y; changes N and Z.
+.macro stack_x16
+.ifdef OS816
+        stx     STKSAV
+        rep     #$10
+        .i16
+        ldx     STKSAV
+.endif
+.endmacro
+
+; ...and back to 8-bit index registers: X is the stack offset again.
+; Keeps A, Y and the flags.
+.macro stack_x8
+.ifdef OS816
+        sep     #$10
+        .i8
+.endif
+.endmacro

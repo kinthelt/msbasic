@@ -18,3 +18,6 @@
 .ifdef EATER
 .include "eater_loadsave.s"
 .endif
+.ifdef OS816
+.include "os816_loadsave.s"
+.endif

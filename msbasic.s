@@ -1,6 +1,10 @@
 .debuginfo +
 
+.if .def(os816)
+.setcpu "65816"         ; native-mode process; see defines_os816.s
+.else
 .setcpu "6502"
+.endif
 .macpack longbranch
 
 .include "defines.s"

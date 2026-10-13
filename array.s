@@ -61,7 +61,11 @@ AYINT:
         ldy     #>NEG32768
         jsr     FCOMP
 MI1:
+.ifdef OS816
+        jne     IQERR           ; 816os: out of range of a BNE
+.else
         bne     IQERR
+.endif
 MI2:
         jmp     QINT
 
@@ -92,6 +96,7 @@ L2FDE:
         pla
         tay
         tsx
+        stack_x16
         lda     STACK+2,x
         pha
         lda     STACK+1,x
@@ -100,6 +105,7 @@ L2FDE:
         sta     STACK+2,x
         lda     FAC_LAST
         sta     STACK+1,x
+        stack_x8
         iny
         jsr     CHRGOT
         cmp     #$2C
