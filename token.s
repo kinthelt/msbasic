@@ -78,6 +78,9 @@
 		keyword_rts "PRT", PRT
 .endif
 		keyword_rts "NEW", NEW
+.ifdef OS816
+		keyword_rts "BANK", BANK
+.endif
 
 		count_tokens
 

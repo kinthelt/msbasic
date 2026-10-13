@@ -77,8 +77,13 @@ Press Return at `MEMORY SIZE?` to use the bank up to $E000 (about 47 KB
 free). Ctrl-C stops a program; Ctrl-Z pauses BASIC and returns to the shell
 (`fg 1` resumes it, `kill 1` ends it). `SAVE` and `LOAD` transfer the
 program with XMODEM through the kernel's `K_SAVE` and `K_LOAD`. Several
-copies can run at once, each in its own bank. `PEEK` and `POKE` address
-BASIC's own bank.
+copies can run at once, each in its own bank.
+
+`PEEK`, `POKE` and `WAIT` address BASIC's own bank until a `BANK n`
+statement (816os only) picks another one; `BANK` alone goes back. For
+example, `BANK 0: POKE 24578,255: POKE 24576,85` lights alternate LEDs on
+the VIA's port B, and `BANK 3: PRINT PEEK(4096)` reads $03:1000. Nothing
+stops a `POKE` from crashing the kernel or another process.
 
 `defines_os816.s` describes how the port deals with native mode: the zero
 page is the process's direct page and the stack is a page of its stack

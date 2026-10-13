@@ -45,5 +45,24 @@ JMP_INDEX:
         plp
         jmp     JMPTRAMP
 
+; ----------------------------------------------------------------------------
+; "BANK" STATEMENT
+;
+; BANK n makes PEEK, POKE and WAIT use bank n (0-255): BANK 0 reaches the
+; kernel and the I/O, BANK 1-7 the other processes' banks. BANK alone goes
+; back to BASIC's own bank, which is where they start. Nothing checks what
+; is there; a POKE can stop the kernel or another process.
+; ----------------------------------------------------------------------------
+BANK:
+        beq     @own            ; nothing follows
+        jsr     GETBYT
+        stx     PEEKBANK
+        rts
+@own:
+        phb
+        pla
+        sta     PEEKBANK
+        rts
+
 ; End of the image: the program text starts here (init.s).
 RAMSTART2:

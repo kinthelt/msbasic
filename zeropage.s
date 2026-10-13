@@ -35,6 +35,11 @@ LINNUM:
 TXPSV:
 .endif
 	.res 2
+.ifdef OS816
+PEEKBANK:			; the bank PEEK, POKE and WAIT use: with LINNUM,
+	.res 1			; a long pointer (see BANK in os816_extra.s)
+.assert PEEKBANK = LINNUM+2, error, "[LINNUM],Y needs the bank after LINNUM"
+.endif
 .ifndef INPUTBUFFER; allow override
 INPUTBUFFER:
 .endif

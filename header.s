@@ -49,5 +49,8 @@
         .a8
         .i8
         stz     KEYBUF
+        phb
+        pla
+        sta     PEEKBANK        ; PEEK and POKE start in BASIC's own bank
         jmp     COLD_START
 .endif
