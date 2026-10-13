@@ -36,7 +36,7 @@ STACK_TOP		:= $FA
 WIDTH			:= 40
 WIDTH2			:= 30
 
-RAMSTART2		:= $0400
+RAMSTART2		:= $0500 ; $0400-$04FF is the XMODEM buffer
 ;
 ;; magic memory locations
 ;ENTROPY = $E844
