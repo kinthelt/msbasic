@@ -34,3 +34,6 @@
 .ifdef EATER
         jmp     COLD_START
 .endif
+.ifdef OS816
+        jmp     COLD_START
+.endif

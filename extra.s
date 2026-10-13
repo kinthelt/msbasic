@@ -35,3 +35,7 @@
 .ifdef EATER
 .include "eater_extra.s"
 .endif
+
+.ifdef OS816
+.include "os816_extra.s"
+.endif

@@ -32,4 +32,7 @@
 .ifdef EATER
 .include "eater_iscntc.s"
 .endif
+.ifdef OS816
+.include "os816_iscntc.s"
+.endif
 ;!!! runs into "STOP"

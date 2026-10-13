@@ -31,7 +31,11 @@ W65C816SXB := 1
 .elseif .def(eater)
 EATER := 1
 .include "defines_eater.s"
+.elseif .def(os816)
+OS816 := 1
+.include "defines_os816.s"
 .endif
+
 
 .ifdef CONFIG_2C
 CONFIG_2B := 1
